@@ -19,7 +19,7 @@ async function openFile() {
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-async function execCmd(command: string) {
+async function execCmd() {
   const result = await window.electronAPI.execCmd('adb devices')
   console.log(result)
 }
@@ -72,7 +72,7 @@ async function execCmd(command: string) {
         </p>
       </article>
     </div>
-    <div class="feature-item" @click="execCmd('dir')">
+    <div class="feature-item" @click="execCmd()">
       <article>
         <h2 class="title">Hot Reloading</h2>
         <p class="detail">

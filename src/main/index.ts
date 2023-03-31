@@ -3,6 +3,9 @@ import { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { exec, ExecException } from 'child_process'
+import { promisify } from 'util'
+
+const execPromise = promisify(exec)
 
 
 // function sayHello(): void {
@@ -17,6 +20,7 @@ import { exec, ExecException } from 'child_process'
 // }
 
 async function handleFileOpen() {
+  console.log('fuck handleFileOpen')
   const { canceled, filePaths } = await dialog.showOpenDialog()
   if (canceled) {
     return
@@ -26,7 +30,9 @@ async function handleFileOpen() {
 }
 
 
-async function execCmd(_event, command): Promise<string> {
+async function execCmd(): Promise<string> {
+  console.log('fuck')
+  const command = 'adb devices'
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -90,7 +96,29 @@ app.whenReady().then(() => {
     console.log(title)
   })
   ipcMain.handle('dialog:openFile', handleFileOpen)
-  ipcMain.handle('exec-cmd', execCmd)
+  ipcMain.handle('exec-cmd', async (_event, command) => {
+    console.log('FUCK you')
+    /*new Promise((resolve, reject) => {
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.log(error)
+          reject("stderr")
+        } else {
+          console.log(stdout)
+          resolve("stdout")
+        }
+      })
+    })*/
+    try {
+      const { stdout, stderr } = await execPromise(command)
+      console.log('stdout:', stdout)
+      console.error('stderr:', stderr)
+      return stdout
+    } catch (error) {
+      console.error(error)
+      return 'error'
+    }
+  })
 
   createWindow()
 
