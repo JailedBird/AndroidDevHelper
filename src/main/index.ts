@@ -1,7 +1,44 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { exec, ExecException } from 'child_process'
+
+
+// function sayHello(): void {
+//   const someArgument = 'adb devices'
+//   exec(someArgument, (err: ExecException | null, stdout: string, stderr: string) => {
+//     if (err) {
+//       console.error(`执行adb命令出错:\n ${err + stderr}`)
+//       return
+//     }
+//     console.log(`adb输出结果: ${stdout}`)
+//   })
+// }
+
+async function handleFileOpen() {
+  const { canceled, filePaths } = await dialog.showOpenDialog()
+  if (canceled) {
+    return
+  } else {
+    return filePaths[0]
+  }
+}
+
+
+async function execCmd(_event, command): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.log(error)
+        reject(stderr)
+      } else {
+        console.log(stdout)
+        resolve(stdout)
+      }
+    })
+  })
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -49,9 +86,15 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  ipcMain.on('set-title', (_event, title) => {
+    console.log(title)
+  })
+  ipcMain.handle('dialog:openFile', handleFileOpen)
+  ipcMain.handle('exec-cmd', execCmd)
+
   createWindow()
 
-  app.on('activate', function () {
+  app.on('activate', function() {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

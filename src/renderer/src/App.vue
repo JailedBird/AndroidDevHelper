@@ -1,11 +1,27 @@
 <script setup lang="ts">
 import Versions from './components/Versions.vue'
-// const { cmd } = require('node-cmd')
+// IPC DOC https://www.electronjs.org/zh/docs/latest/tutorial/ipc
+// IPC API https://www.electronjs.org/zh/docs/latest/api/ipc-renderer
 
-const sayHello = (): void => {
-  commandline.run('dir', (s1, s2, s3) => {
-    console.log(s2)
-  })
+
+function sendMessageToMainProcess(): void {
+  const message = 'sendMessageToMainProcess'
+  // noinspection TypeScriptUnresolvedVariable
+  window.electronAPI.setTitle(message)
+  // noinspection TypeScriptUnresolvedVariable
+  window.electronAPI.setTitle1(message + message)
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+async function openFile() {
+  const filePath = await window.electronAPI.openFile()
+  console.log(filePath)
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+async function execCmd(command: string) {
+  const result = await window.electronAPI.execCmd('adb devices')
+  console.log(result)
 }
 </script>
 
@@ -38,7 +54,7 @@ const sayHello = (): void => {
   </div>
 
   <div class="features">
-    <div class="feature-item">
+    <div class="feature-item" @click="sendMessageToMainProcess()">
       <article>
         <h2 class="title">Configuring</h2>
         <p class="detail">
@@ -47,7 +63,7 @@ const sayHello = (): void => {
         </p>
       </article>
     </div>
-    <div class="feature-item">
+    <div class="feature-item" @click="openFile()">
       <article>
         <h2 class="title">HMR</h2>
         <p class="detail">
@@ -56,7 +72,7 @@ const sayHello = (): void => {
         </p>
       </article>
     </div>
-    <div class="feature-item">
+    <div class="feature-item" @click="execCmd('dir')">
       <article>
         <h2 class="title">Hot Reloading</h2>
         <p class="detail">
