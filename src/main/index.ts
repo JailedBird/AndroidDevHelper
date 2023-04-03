@@ -29,24 +29,7 @@ async function handleFileOpen() {
   }
 }
 
-
-async function execCmd(): Promise<string> {
-  console.log('fuck')
-  const command = 'adb devices'
-  return new Promise((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.log(error)
-        reject(stderr)
-      } else {
-        console.log(stdout)
-        resolve(stdout)
-      }
-    })
-  })
-}
-
-function createWindow(): void {
+function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,

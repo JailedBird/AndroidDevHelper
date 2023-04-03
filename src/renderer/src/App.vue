@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import Versions from './components/Versions.vue'
-import { ElMessage } from 'element-plus'
 import { ref } from 'vue'
+import * as zlib from 'zlib'
 // IPC DOC https://www.electronjs.org/zh/docs/latest/tutorial/ipc
 // IPC API https://www.electronjs.org/zh/docs/latest/api/ipc-renderer
-import 'element-plus/es/components/button/style/index'
-
 function sendMessageToMainProcess(): void {
   const message = 'sendMessageToMainProcess'
   // noinspection TypeScriptUnresolvedVariable
@@ -16,34 +14,78 @@ function sendMessageToMainProcess(): void {
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 async function openFile() {
+  // noinspection TypeScriptUnresolvedVariable
   const filePath = await window.electronAPI.openFile()
   console.log(filePath)
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-async function execCmd() {
-  const result = await window.electronAPI.execCmd('adb devices')
-  console.log(result)
-  ElMessage.info(result)
-  /* const NOTIFICATION_TITLE = 'Title'
-   const NOTIFICATION_BODY =
-     'Notification from the Renderer process. Click to log to console.'
-   const CLICK_MESSAGE = 'Notification clicked'
+async function execCmd(command: string) {
+  // noinspection TypeScriptUnresolvedVariable
+  return window.electronAPI.execCmd(command)
+}
 
-   new Notification(NOTIFICATION_TITLE, { body: result }).onclick =
-     () => console.log(CLICK_MESSAGE)*/
+const devicesList = ref<string[]>([])
+
+async function getDevicesList() {
+  const command = 'adb devices -l'
+  const result: string = await execCmd(command)
+  if (result.startsWith('error')) {
+    return
+  } else {
+    const adbList = parseAdbDevices(result)
+    console.log(adbList)
+  }
+}
+
+const ERROR_LABEL = '[Error]'
+
+class DeviceInfo {
+  deviceId: string
+  product?: string
+  model?: string
+  device?: string
+  transport_id?: string
+
+  constructor(deviceId: string) {
+    this.deviceId = deviceId
+  }
+}
+
+function parseAdbDevices(result: string): DeviceInfo[] {
+  if (result.length === 0 || result.startsWith(ERROR_LABEL)) {
+    return []
+  }
+
+  const lines = result.split('\n')
+  const deviceInfoList: DeviceInfo[] = []
+
+  for (const line of lines) {
+    const deviceInfo: Record<string, any> = {}
+
+    const [deviceId, ...dataFields] = line.split(/\s+/)
+
+    deviceInfo.deviceId = deviceId
+
+    for (const field of dataFields) {
+      const [key, value] = field.split(':')
+      deviceInfo[key] = value
+    }
+    const deviceModel = new DeviceInfo(deviceId)
+    deviceModel.product = deviceInfo['product']
+    deviceModel.model = deviceInfo['model']
+    deviceModel.device = deviceInfo['device']
+    deviceModel.transport_id = deviceInfo['transport_id']
+
+    deviceInfoList.push(deviceModel)
+  }
+  return deviceInfoList
 }
 
 // eslint-disable-next-line vue/no-export-in-script-setup
 
 const checked1 = ref(true)
 const checked2 = ref(false)
-const checked3 = ref(false)
-const checked4 = ref(false)
-const checked5 = ref(false)
-const checked6 = ref(false)
-const checked7 = ref(false)
-const checked8 = ref(false)
 
 </script>
 
@@ -75,32 +117,19 @@ const checked8 = ref(false)
     </div>
   </div>
 
-    <div style="margin-top: 20px; margin-bottom: 20px">
-      <el-row style="display: flex">
-        <el-col :span="24">
-          <el-button  round type="warning">主要按钮</el-button>
-        </el-col>
+  <div style="margin-top: 20px; margin-bottom: 20px">
+    <el-row style="display: flex">
+      <el-col :span="24">
+        <el-button type="primary" @click="getDevicesList()">设备扫描</el-button>
+      </el-col>
 
-      </el-row>
-    </div>
+    </el-row>
+  </div>
 
-    <div>
-      <el-checkbox v-model="checked1" label="备选项1">备选项1</el-checkbox>
-      <el-checkbox v-model="checked2" label="备选项2">备选项2</el-checkbox>
-    </div>
-    <div>
-      <el-checkbox v-model="checked3" label="备选项1" size="medium">备选项1</el-checkbox>
-      <el-checkbox v-model="checked4" label="备选项2" size="medium"></el-checkbox>
-    </div>
-    <div>
-      <el-checkbox v-model="checked5" label="备选项1" size="small"></el-checkbox>
-      <el-checkbox v-model="checked6" label="备选项2" size="small"></el-checkbox>
-    </div>
-    <div>
-      <el-checkbox v-model="checked7" label="备选项1" size="mini"></el-checkbox>
-      <el-checkbox v-model="checked8" label="备选项2" size="mini"></el-checkbox>
-    </div>
-
+  <div>
+    <el-checkbox v-model="checked1" label="备选项1"></el-checkbox>
+    <el-checkbox v-model="checked2" label="备选项2"></el-checkbox>
+  </div>
 
   <div class="features">
     <div class="feature-item" @click="sendMessageToMainProcess()">
@@ -151,7 +180,7 @@ const checked8 = ref(false)
         </p>
       </article>
     </div>
-    <div class="feature-item" @click="sayHello">
+    <div class="feature-item">
       <article>
         <h2 class="title">Packaging</h2>
         <p class="detail">
