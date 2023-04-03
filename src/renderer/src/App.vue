@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Versions from './components/Versions.vue'
 import { ref } from 'vue'
-import * as zlib from 'zlib'
+import { isEmptyString } from '../../utils/StringUtils'
 // IPC DOC https://www.electronjs.org/zh/docs/latest/tutorial/ipc
 // IPC API https://www.electronjs.org/zh/docs/latest/api/ipc-renderer
 function sendMessageToMainProcess(): void {
@@ -25,7 +25,8 @@ async function execCmd(command: string) {
   return window.electronAPI.execCmd(command)
 }
 
-const devicesList = ref<string[]>([])
+const devicesList = ref<DeviceInfo[]>([])
+getDevicesList()
 
 async function getDevicesList() {
   const command = 'adb devices -l'
@@ -34,7 +35,16 @@ async function getDevicesList() {
     return
   } else {
     const adbList = parseAdbDevices(result)
+    devicesList.value = adbList
     console.log(adbList)
+  }
+}
+
+function showScreen() {
+  for (const device of devicesList.value) {
+    if (device.check) {
+      execCmd('scrcpy -s ' + device.deviceId)
+    }
   }
 }
 
@@ -46,6 +56,7 @@ class DeviceInfo {
   model?: string
   device?: string
   transport_id?: string
+  check: boolean = false
 
   constructor(deviceId: string) {
     this.deviceId = deviceId
@@ -53,7 +64,8 @@ class DeviceInfo {
 }
 
 function parseAdbDevices(result: string): DeviceInfo[] {
-  if (result.length === 0 || result.startsWith(ERROR_LABEL)) {
+  if (result.length === 0 ||
+    result.startsWith(ERROR_LABEL)) {
     return []
   }
 
@@ -62,30 +74,28 @@ function parseAdbDevices(result: string): DeviceInfo[] {
 
   for (const line of lines) {
     const deviceInfo: Record<string, any> = {}
-
     const [deviceId, ...dataFields] = line.split(/\s+/)
-
-    deviceInfo.deviceId = deviceId
-
     for (const field of dataFields) {
       const [key, value] = field.split(':')
       deviceInfo[key] = value
+    }
+    if (isEmptyString(deviceId)) {
+      continue
     }
     const deviceModel = new DeviceInfo(deviceId)
     deviceModel.product = deviceInfo['product']
     deviceModel.model = deviceInfo['model']
     deviceModel.device = deviceInfo['device']
     deviceModel.transport_id = deviceInfo['transport_id']
-
-    deviceInfoList.push(deviceModel)
+    if (deviceModel.product?.length > 0 && deviceModel.device?.length > 0) {
+      deviceInfoList.push(deviceModel)
+    }
+    if (deviceInfoList.length > 0) {
+      deviceInfoList[0].check = true
+    }
   }
   return deviceInfoList
 }
-
-// eslint-disable-next-line vue/no-export-in-script-setup
-
-const checked1 = ref(true)
-const checked2 = ref(false)
 
 </script>
 
@@ -119,16 +129,16 @@ const checked2 = ref(false)
 
   <div style="margin-top: 20px; margin-bottom: 20px">
     <el-row style="display: flex">
-      <el-col :span="24">
+      <el-col :span="24" style="margin-bottom: 20px;">
         <el-button type="primary" @click="getDevicesList()">设备扫描</el-button>
       </el-col>
-
+      <el-col v-for="device in devicesList" :span="6" style="margin-left: 8px">
+        <el-checkbox v-model="device.check" :label="device.model"></el-checkbox>
+      </el-col>
     </el-row>
-  </div>
-
-  <div>
-    <el-checkbox v-model="checked1" label="备选项1"></el-checkbox>
-    <el-checkbox v-model="checked2" label="备选项2"></el-checkbox>
+    <el-col :span="24" style="margin-top: 20px;">
+      <el-button type="primary" @click="showScreen()">展示投屏</el-button>
+    </el-col>
   </div>
 
   <div class="features">
