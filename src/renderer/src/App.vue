@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import Versions from './components/Versions.vue'
-// ElMessage 样式不生效的问题
-import 'element-plus/es/components/message-box/style/index'
-import 'element-plus/es/components/message/style/index'
 import { ElMessage } from 'element-plus'
 // IPC DOC https://www.electronjs.org/zh/docs/latest/tutorial/ipc
 // IPC API https://www.electronjs.org/zh/docs/latest/api/ipc-renderer

@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { exec, ExecException } from 'child_process'
+import { exec } from 'child_process'
 import { promisify } from 'util'
 
 const execPromise = promisify(exec)
