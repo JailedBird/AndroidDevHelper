@@ -15,7 +15,8 @@ if (process.contextIsolated) {
       setTitle: (title) => ipcRenderer.send('set-title', title),
       setTitle1: (title) => ipcRenderer.send('set-title', title),
       openFile: () => ipcRenderer.invoke('dialog:openFile'),
-      execCmd: (command) => ipcRenderer.invoke('exec-cmd', command)
+      execCmd: (command) => ipcRenderer.invoke('exec-cmd', command),
+      execAsyncCmd: (command) => ipcRenderer.invoke('exec-async-cmd', command)
     })
   } catch (error) {
     console.error(error)

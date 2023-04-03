@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { exec } from 'child_process'
+import { exec, ExecException } from 'child_process'
 import { promisify } from 'util'
 
 const execPromise = promisify(exec)
@@ -27,6 +27,17 @@ async function handleFileOpen() {
   } else {
     return filePaths[0]
   }
+}
+
+function execAsync(command: string) {
+  console.log('execAsync command line ' + command)
+  exec(command, (error, stdout: string, stderr: string) => {
+    if (error) {
+      console.error(stderr)
+    } else {
+      console.log(stdout)
+    }
+  })
 }
 
 function createWindow() {
@@ -80,18 +91,6 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('dialog:openFile', handleFileOpen)
   ipcMain.handle('exec-cmd', async (_event, command) => {
-    console.log('FUCK you')
-    /*new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.log(error)
-          reject("stderr")
-        } else {
-          console.log(stdout)
-          resolve("stdout")
-        }
-      })
-    })*/
     try {
       const { stdout, stderr } = await execPromise(command)
       console.log('stdout:', stdout)
@@ -101,6 +100,10 @@ app.whenReady().then(() => {
       console.error(error)
       return 'error'
     }
+  })
+
+  ipcMain.handle('exec-async-cmd', (_event, command) => {
+    execAsync(command)
   })
 
   createWindow()

@@ -5,11 +5,11 @@ import { isEmptyString } from '../../utils/StringUtils'
 // IPC DOC https://www.electronjs.org/zh/docs/latest/tutorial/ipc
 // IPC API https://www.electronjs.org/zh/docs/latest/api/ipc-renderer
 function sendMessageToMainProcess(): void {
-  const message = 'sendMessageToMainProcess'
+  const message = 'sendMessageFromRenderProcessToMainProcess'
   // noinspection TypeScriptUnresolvedVariable
   window.electronAPI.setTitle(message)
   // noinspection TypeScriptUnresolvedVariable
-  window.electronAPI.setTitle1(message + message)
+  window.electronAPI.setTitle1(message + ' ' + message)
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -24,6 +24,12 @@ async function execCmd(command: string) {
   // noinspection TypeScriptUnresolvedVariable
   return window.electronAPI.execCmd(command)
 }
+
+function execAsyncCmd(command: string) {
+  // noinspection TypeScriptUnresolvedVariable
+  window.electronAPI.execAsyncCmd(command)
+}
+
 
 const devicesList = ref<DeviceInfo[]>([])
 getDevicesList()
@@ -43,7 +49,8 @@ async function getDevicesList() {
 function showScreen() {
   for (const device of devicesList.value) {
     if (device.check) {
-      execCmd('scrcpy -s ' + device.deviceId)
+      // noinspection SpellCheckingInspection
+      execAsyncCmd('scrcpy -s ' + device.deviceId)
     }
   }
 }
@@ -60,6 +67,15 @@ class DeviceInfo {
 
   constructor(deviceId: string) {
     this.deviceId = deviceId
+  }
+}
+
+function singleChooseSwitch(index: number) {
+  if (index >= 0 && index < devicesList.value.length) {
+    let i: number
+    for (i = 0; i < devicesList.value.length; i++) {
+      devicesList.value[i].check = index === i
+    }
   }
 }
 
@@ -132,7 +148,7 @@ function parseAdbDevices(result: string): DeviceInfo[] {
       <el-col :span="24" style="margin-bottom: 20px;">
         <el-button type="primary" @click="getDevicesList()">设备扫描</el-button>
       </el-col>
-      <el-col v-for="device in devicesList" :span="6" style="margin-left: 8px">
+      <el-col v-for="(device, index ) in devicesList" :span="6" style="margin-left: 8px">
         <el-checkbox v-model="device.check" :label="device.model"></el-checkbox>
       </el-col>
     </el-row>
