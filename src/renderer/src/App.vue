@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import Versions from './components/Versions.vue'
 import { ElMessage } from 'element-plus'
+import { ref } from 'vue'
 // IPC DOC https://www.electronjs.org/zh/docs/latest/tutorial/ipc
 // IPC API https://www.electronjs.org/zh/docs/latest/api/ipc-renderer
-
+import 'element-plus/es/components/button/style/index'
 
 function sendMessageToMainProcess(): void {
   const message = 'sendMessageToMainProcess'
@@ -24,14 +25,26 @@ async function execCmd() {
   const result = await window.electronAPI.execCmd('adb devices')
   console.log(result)
   ElMessage.info(result)
- /* const NOTIFICATION_TITLE = 'Title'
-  const NOTIFICATION_BODY =
-    'Notification from the Renderer process. Click to log to console.'
-  const CLICK_MESSAGE = 'Notification clicked'
+  /* const NOTIFICATION_TITLE = 'Title'
+   const NOTIFICATION_BODY =
+     'Notification from the Renderer process. Click to log to console.'
+   const CLICK_MESSAGE = 'Notification clicked'
 
-  new Notification(NOTIFICATION_TITLE, { body: result }).onclick =
-    () => console.log(CLICK_MESSAGE)*/
+   new Notification(NOTIFICATION_TITLE, { body: result }).onclick =
+     () => console.log(CLICK_MESSAGE)*/
 }
+
+// eslint-disable-next-line vue/no-export-in-script-setup
+
+const checked1 = ref(true)
+const checked2 = ref(false)
+const checked3 = ref(false)
+const checked4 = ref(false)
+const checked5 = ref(false)
+const checked6 = ref(false)
+const checked7 = ref(false)
+const checked8 = ref(false)
+
 </script>
 
 <template>
@@ -61,6 +74,33 @@ async function execCmd() {
       </a>
     </div>
   </div>
+
+    <div style="margin-top: 20px; margin-bottom: 20px">
+      <el-row style="display: flex">
+        <el-col :span="24">
+          <el-button  round type="warning">主要按钮</el-button>
+        </el-col>
+
+      </el-row>
+    </div>
+
+    <div>
+      <el-checkbox v-model="checked1" label="备选项1">备选项1</el-checkbox>
+      <el-checkbox v-model="checked2" label="备选项2">备选项2</el-checkbox>
+    </div>
+    <div>
+      <el-checkbox v-model="checked3" label="备选项1" size="medium">备选项1</el-checkbox>
+      <el-checkbox v-model="checked4" label="备选项2" size="medium"></el-checkbox>
+    </div>
+    <div>
+      <el-checkbox v-model="checked5" label="备选项1" size="small"></el-checkbox>
+      <el-checkbox v-model="checked6" label="备选项2" size="small"></el-checkbox>
+    </div>
+    <div>
+      <el-checkbox v-model="checked7" label="备选项1" size="mini"></el-checkbox>
+      <el-checkbox v-model="checked8" label="备选项2" size="mini"></el-checkbox>
+    </div>
+
 
   <div class="features">
     <div class="feature-item" @click="sendMessageToMainProcess()">
