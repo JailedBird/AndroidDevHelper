@@ -4,20 +4,34 @@ import { ref } from 'vue'
 import { isEmptyString } from '../../utils/StringUtils'
 // IPC DOC https://www.electronjs.org/zh/docs/latest/tutorial/ipc
 // IPC API https://www.electronjs.org/zh/docs/latest/api/ipc-renderer
-function sendMessageToMainProcess(): void {
-  const message = 'sendMessageFromRenderProcessToMainProcess'
-  // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
-  window.api.setTitle(message)
-  // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
-  window.api.setTitle1(message + ' ' + message)
+
+class DeviceInfo {
+  deviceId: string
+  product?: string
+  model?: string
+  device?: string
+  transport_id?: string
+  check = false
+
+  constructor(deviceId: string) {
+    this.deviceId = deviceId
+  }
 }
 
+// function sendMessageToMainProcess(): void {
+//   const message = 'sendMessageFromRenderProcessToMainProcess'
+//   // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
+//   window.api.setTitle(message)
+//   // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
+//   window.api.setTitle1(message + ' ' + message)
+// }
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-async function openFile() {
-  // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
-  const filePath = await window.api.openFile()
-  console.log(filePath)
-}
+// async function openFile() {
+//   // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
+//   const filePath = await window.api.openFile()
+//   console.log(filePath)
+// }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 async function execCmd(command: string) {
@@ -45,38 +59,16 @@ async function getDevicesList(): Promise<void> {
   }
 }
 
-function showScreen(): void {
-  for (const device of devicesList.value) {
-    if (device.check) {
-      // noinspection SpellCheckingInspection
-      execAsyncCmd('scrcpy -s ' + device.deviceId)
-    }
-  }
-}
-
 const ERROR_LABEL = '[Error]'
 
-class DeviceInfo {
-  deviceId: string
-  product?: string
-  model?: string
-  device?: string
-  transport_id?: string
-  check = false
+const radio = ref<number>(0)
 
-  constructor(deviceId: string) {
-    this.deviceId = deviceId
+function showScreen(index: number = radio.value): void {
+  if (index >= 0 && index < devicesList.value.length) {
+    // noinspection SpellCheckingInspection
+    execAsyncCmd('scrcpy -s ' + devicesList.value[index].deviceId)
   }
 }
-
-/*function singleChooseSwitch(index: number) :void{
-  if (index >= 0 && index < devicesList.value.length) {
-    let i: number
-    for (i = 0; i < devicesList.value.length; i++) {
-      devicesList.value[i].check = index === i
-    }
-  }
-}*/
 
 function parseAdbDevices(result: string): DeviceInfo[] {
   if (result.length === 0 || result.startsWith(ERROR_LABEL)) {
@@ -145,8 +137,20 @@ function parseAdbDevices(result: string): DeviceInfo[] {
       <el-col :span="24" style="margin-bottom: 20px">
         <el-button type="primary" @click="getDevicesList()">设备扫描</el-button>
       </el-col>
-      <el-col v-for="device in devicesList" :span="6" style="margin-left: 8px">
-        <el-checkbox v-model="device.check" :label="device.model"></el-checkbox>
+      <el-col :span="24">
+        <el-radio-group v-model="radio" style="flex-wrap: nowrap">
+          <el-col
+            v-for="(device, index) in devicesList"
+            :key="device.deviceId"
+            :span="8"
+            style="margin-left: 8px"
+          >
+            <el-radio :label="index">{{ device.model }}</el-radio>
+          </el-col>
+        </el-radio-group>
+        <!--      <el-col v-for="device in devicesList" :span="6" style="margin-left: 8px">-->
+        <!--        <el-checkbox v-model="device.check" :label="device.model"></el-checkbox>-->
+        <!--      </el-col>-->
       </el-col>
     </el-row>
     <el-col :span="24" style="margin-top: 20px">
@@ -154,66 +158,66 @@ function parseAdbDevices(result: string): DeviceInfo[] {
     </el-col>
   </div>
 
-  <div class="features">
-    <div class="feature-item" @click="sendMessageToMainProcess()">
-      <article>
-        <h2 class="title">Configuring</h2>
-        <p class="detail">
-          Config with <span>electron.vite.config.ts</span> and refer to the
-          <a target="_blank" href="https://evite.netlify.app/config/">config guide</a>.
-        </p>
-      </article>
-    </div>
-    <div class="feature-item" @click="openFile()">
-      <article>
-        <h2 class="title">HMR</h2>
-        <p class="detail">
-          Edit <span>src/renderer</span> files to test HMR. See
-          <a target="_blank" href="https://evite.netlify.app/guide/hmr-in-renderer.html">docs</a>.
-        </p>
-      </article>
-    </div>
-    <div class="feature-item" @click="execCmd('dir')">
-      <article>
-        <h2 class="title">Hot Reloading</h2>
-        <p class="detail">
-          Run <span>'electron-vite dev --watch'</span> to enable. See
-          <a target="_blank" href="https://evite.netlify.app/guide/hot-reloading.html">docs</a>.
-        </p>
-      </article>
-    </div>
-    <div class="feature-item">
-      <article>
-        <h2 class="title">Debugging</h2>
-        <p class="detail">
-          Check out <span>.vscode/launch.json</span>. See
-          <a target="_blank" href="https://evite.netlify.app/guide/debugging.html">docs</a>.
-        </p>
-      </article>
-    </div>
-    <div class="feature-item">
-      <article>
-        <h2 class="title">Source Code Protection</h2>
-        <p class="detail">
-          Supported via built-in plugin <span>bytecodePlugin</span>. See
-          <a target="_blank" href="https://evite.netlify.app/guide/source-code-protection.html">
-            docs
-          </a>
-          .
-        </p>
-      </article>
-    </div>
-    <div class="feature-item">
-      <article>
-        <h2 class="title">Packaging</h2>
-        <p class="detail">
-          Use
-          <a target="_blank" href="https://www.electron.build">electron-builder</a>
-          and pre-configured to pack your app.
-        </p>
-      </article>
-    </div>
-  </div>
+  <!--  <div class="features">-->
+  <!--    <div class="feature-item" @click="sendMessageToMainProcess()">-->
+  <!--      <article>-->
+  <!--        <h2 class="title">Configuring</h2>-->
+  <!--        <p class="detail">-->
+  <!--          Config with <span>electron.vite.config.ts</span> and refer to the-->
+  <!--          <a target="_blank" href="https://evite.netlify.app/config/">config guide</a>.-->
+  <!--        </p>-->
+  <!--      </article>-->
+  <!--    </div>-->
+  <!--    <div class="feature-item" @click="openFile()">-->
+  <!--      <article>-->
+  <!--        <h2 class="title">HMR</h2>-->
+  <!--        <p class="detail">-->
+  <!--          Edit <span>src/renderer</span> files to test HMR. See-->
+  <!--          <a target="_blank" href="https://evite.netlify.app/guide/hmr-in-renderer.html">docs</a>.-->
+  <!--        </p>-->
+  <!--      </article>-->
+  <!--    </div>-->
+  <!--    <div class="feature-item" @click="execCmd('dir')">-->
+  <!--      <article>-->
+  <!--        <h2 class="title">Hot Reloading</h2>-->
+  <!--        <p class="detail">-->
+  <!--          Run <span>'electron-vite dev &#45;&#45;watch'</span> to enable. See-->
+  <!--          <a target="_blank" href="https://evite.netlify.app/guide/hot-reloading.html">docs</a>.-->
+  <!--        </p>-->
+  <!--      </article>-->
+  <!--    </div>-->
+  <!--    <div class="feature-item">-->
+  <!--      <article>-->
+  <!--        <h2 class="title">Debugging</h2>-->
+  <!--        <p class="detail">-->
+  <!--          Check out <span>.vscode/launch.json</span>. See-->
+  <!--          <a target="_blank" href="https://evite.netlify.app/guide/debugging.html">docs</a>.-->
+  <!--        </p>-->
+  <!--      </article>-->
+  <!--    </div>-->
+  <!--    <div class="feature-item">-->
+  <!--      <article>-->
+  <!--        <h2 class="title">Source Code Protection</h2>-->
+  <!--        <p class="detail">-->
+  <!--          Supported via built-in plugin <span>bytecodePlugin</span>. See-->
+  <!--          <a target="_blank" href="https://evite.netlify.app/guide/source-code-protection.html">-->
+  <!--            docs-->
+  <!--          </a>-->
+  <!--          .-->
+  <!--        </p>-->
+  <!--      </article>-->
+  <!--    </div>-->
+  <!--    <div class="feature-item">-->
+  <!--      <article>-->
+  <!--        <h2 class="title">Packaging</h2>-->
+  <!--        <p class="detail">-->
+  <!--          Use-->
+  <!--          <a target="_blank" href="https://www.electron.build">electron-builder</a>-->
+  <!--          and pre-configured to pack your app.-->
+  <!--        </p>-->
+  <!--      </article>-->
+  <!--    </div>-->
+  <!--  </div>-->
 </template>
 
 <style lang="less">
