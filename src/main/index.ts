@@ -2,34 +2,22 @@ import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { exec, ExecException } from 'child_process'
+import { exec } from 'child_process'
 import { promisify } from 'util'
 
 const execPromise = promisify(exec)
 
-
-// function sayHello(): void {
-//   const someArgument = 'adb devices'
-//   exec(someArgument, (err: ExecException | null, stdout: string, stderr: string) => {
-//     if (err) {
-//       console.error(`执行adb命令出错:\n ${err + stderr}`)
-//       return
-//     }
-//     console.log(`adb输出结果: ${stdout}`)
-//   })
-// }
-
-async function handleFileOpen() {
+async function handleFileOpen(): Promise<string> {
   console.log('fuck handleFileOpen')
-  const { canceled, filePaths } = await dialog.showOpenDialog()
+  const { canceled, filePaths } = await dialog.showOpenDialog({})
   if (canceled) {
-    return
+    return ''
   } else {
     return filePaths[0]
   }
 }
 
-function execAsync(command: string) {
+function execAsync(command: string): void {
   console.log('execAsync command line ' + command)
   exec(command, (error, stdout: string, stderr: string) => {
     if (error) {
@@ -40,7 +28,7 @@ function execAsync(command: string) {
   })
 }
 
-function createWindow() {
+function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -108,7 +96,7 @@ app.whenReady().then(() => {
 
   createWindow()
 
-  app.on('activate', function() {
+  app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -124,5 +112,5 @@ app.on('window-all-closed', () => {
   }
 })
 
-// In this file you can include the rest of your app"s specific main process
+// In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.

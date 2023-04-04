@@ -6,35 +6,34 @@ import { isEmptyString } from '../../utils/StringUtils'
 // IPC API https://www.electronjs.org/zh/docs/latest/api/ipc-renderer
 function sendMessageToMainProcess(): void {
   const message = 'sendMessageFromRenderProcessToMainProcess'
-  // noinspection TypeScriptUnresolvedVariable
-  window.electronAPI.setTitle(message)
-  // noinspection TypeScriptUnresolvedVariable
-  window.electronAPI.setTitle1(message + ' ' + message)
+  // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
+  window.api.setTitle(message)
+  // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
+  window.api.setTitle1(message + ' ' + message)
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 async function openFile() {
-  // noinspection TypeScriptUnresolvedVariable
-  const filePath = await window.electronAPI.openFile()
+  // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
+  const filePath = await window.api.openFile()
   console.log(filePath)
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 async function execCmd(command: string) {
-  // noinspection TypeScriptUnresolvedVariable
-  return window.electronAPI.execCmd(command)
+  // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
+  return window.api.execCmd(command)
 }
 
-function execAsyncCmd(command: string) {
-  // noinspection TypeScriptUnresolvedVariable
-  window.electronAPI.execAsyncCmd(command)
+function execAsyncCmd(command: string): void {
+  // noinspection TypeScriptUnresolvedVariable,TypeScriptUnresolvedFunction
+  window.api.execAsyncCmd(command)
 }
-
 
 const devicesList = ref<DeviceInfo[]>([])
 getDevicesList()
 
-async function getDevicesList() {
+async function getDevicesList(): Promise<void> {
   const command = 'adb devices -l'
   const result: string = await execCmd(command)
   if (result.startsWith('error')) {
@@ -46,7 +45,7 @@ async function getDevicesList() {
   }
 }
 
-function showScreen() {
+function showScreen(): void {
   for (const device of devicesList.value) {
     if (device.check) {
       // noinspection SpellCheckingInspection
@@ -63,25 +62,24 @@ class DeviceInfo {
   model?: string
   device?: string
   transport_id?: string
-  check: boolean = false
+  check = false
 
   constructor(deviceId: string) {
     this.deviceId = deviceId
   }
 }
 
-function singleChooseSwitch(index: number) {
+/*function singleChooseSwitch(index: number) :void{
   if (index >= 0 && index < devicesList.value.length) {
     let i: number
     for (i = 0; i < devicesList.value.length; i++) {
       devicesList.value[i].check = index === i
     }
   }
-}
+}*/
 
 function parseAdbDevices(result: string): DeviceInfo[] {
-  if (result.length === 0 ||
-    result.startsWith(ERROR_LABEL)) {
+  if (result.length === 0 || result.startsWith(ERROR_LABEL)) {
     return []
   }
 
@@ -89,7 +87,7 @@ function parseAdbDevices(result: string): DeviceInfo[] {
   const deviceInfoList: DeviceInfo[] = []
 
   for (const line of lines) {
-    const deviceInfo: Record<string, any> = {}
+    const deviceInfo: Record<string, string> = {}
     const [deviceId, ...dataFields] = line.split(/\s+/)
     for (const field of dataFields) {
       const [key, value] = field.split(':')
@@ -112,7 +110,6 @@ function parseAdbDevices(result: string): DeviceInfo[] {
   }
   return deviceInfoList
 }
-
 </script>
 
 <template>
@@ -145,14 +142,14 @@ function parseAdbDevices(result: string): DeviceInfo[] {
 
   <div style="margin-top: 20px; margin-bottom: 20px">
     <el-row style="display: flex">
-      <el-col :span="24" style="margin-bottom: 20px;">
+      <el-col :span="24" style="margin-bottom: 20px">
         <el-button type="primary" @click="getDevicesList()">设备扫描</el-button>
       </el-col>
-      <el-col v-for="(device, index ) in devicesList" :span="6" style="margin-left: 8px">
+      <el-col v-for="device in devicesList" :span="6" style="margin-left: 8px">
         <el-checkbox v-model="device.check" :label="device.model"></el-checkbox>
       </el-col>
     </el-row>
-    <el-col :span="24" style="margin-top: 20px;">
+    <el-col :span="24" style="margin-top: 20px">
       <el-button type="primary" @click="showScreen()">展示投屏</el-button>
     </el-col>
   </div>
@@ -176,7 +173,7 @@ function parseAdbDevices(result: string): DeviceInfo[] {
         </p>
       </article>
     </div>
-    <div class="feature-item" @click="execCmd()">
+    <div class="feature-item" @click="execCmd('dir')">
       <article>
         <h2 class="title">Hot Reloading</h2>
         <p class="detail">
